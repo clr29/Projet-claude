@@ -167,6 +167,7 @@ const PROGRAM = {
 const ORDER = { 4: ["push", "pull", "legs", "upper"], 3: ["push", "pull", "legs"] };
 
 let cfg = { kcal: 3000, p: 140, c: 420, f: 80, mode: 4 };
+let base = {};
 let days = {};
 let cur = iso(new Date());
 let store = null, sample = null, imagesOk = false, offline = false, loaded = false;
@@ -216,6 +217,7 @@ function lastPerf(exId, before) {
 function round(x) { return Math.round(x * 4) / 4; }
 function suggest(ex, before) {
   const l = lastPerf(ex.id, before);
+  if (!l && base[ex.id] != null && isFinite(+base[ex.id])) { const b = +base[ex.id]; return { kg: b, past: `Ta charge actuelle (d'après ta note) : ${b} kg`, text: `Commence à ${b} kg et vise ${ex.lo}–${ex.hi} reps. Note tes reps : la page ajustera la charge la fois d'après.` }; }
   if (!l) return { kg: null, text: ex.bw ? `Première fois : poids du corps, vise ${ex.lo}–${ex.hi} reps.` : `Première fois : choisis une charge pour ${ex.lo}–${ex.hi} reps en gardant 1–2 reps en réserve.` };
   const kg = +l.sets[0].kg || 0;
   const reps = l.sets.map(s => +s.reps);
@@ -265,6 +267,7 @@ async function connect() {
     days = next; loaded = true; render();
   }, e => { clearTimeout(fail); toast("Lecture impossible : " + (e.message || e.code)); });
   db.doc("config/profile").onSnapshot(s => { if (s.exists) { cfg = Object.assign({}, cfg, s.data()); render(); } }, () => {});
+  db.doc("config/base").onSnapshot(s => { if (s.exists) { base = s.data() || {}; render(); } }, () => {});
 }
 
 /* ---------- DOM ---------- */
